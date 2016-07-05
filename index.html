@@ -1,23 +1,212 @@
----
-layout: default
----
+<!DOCTYPE html>
+<html ng-app="myApp" ng-controller="myCtrl">
+<head>
+  <meta charset="utf-8">
 
-<div class="home">
+  <!-- Angular Material requires Angular.js Libraries -->
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-animate.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-aria.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-messages.min.js"></script>
 
-  <h1 class="page-heading">Posts</h1>
 
-  <ul class="post-list">
-    {% for post in site.posts %}
-      <li>
-        <span class="post-meta">{{ post.date | date: "%b %-d, %Y" }}</span>
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
 
-        <h2>
-          <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
-        </h2>
-      </li>
-    {% endfor %}
-  </ul>
+  <!-- Angular Material style sheet -->
+  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.css">
 
-  <p class="rss-subscribe">subscribe <a href="{{ "/feed.xml" | prepend: site.baseurl }}">via RSS</a></p>
+  <!-- Angular Material Library -->
+  <script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.js"></script>
 
-</div>
+
+  <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyDI7pmQo56Gl7J5ABIIvMtg0kLmIPp1P64",
+      authDomain: "money-ad865.firebaseapp.com",
+      databaseURL: "https://money-ad865.firebaseio.com",
+      storageBucket: "money-ad865.appspot.com",
+    };
+    firebase.initializeApp(config);
+
+
+    Date.prototype.yyyymmdd = function()
+    {
+        var yyyy = this.getFullYear().toString();
+        var mm = (this.getMonth() + 1).toString();
+        var dd = this.getDate().toString();
+
+        return yyyy + "-" + (mm[1] ? mm : '0'+mm[0]) + "-" + (dd[1] ? dd : '0'+dd[0]);
+    }
+
+  </script>
+
+</head>
+
+<body class="container">
+
+  <div>
+    <h2>지출</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>날짜</th>
+          <th>카테고리</th>
+          <th>설명</th>
+          <th>금액</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="text" ng-model="moneyId" ng-readonly="true"></td>
+          <td><md-datepicker ng-model="moneyDate" md-placeholder="Enter date"></md-datepicker></td>
+          <td>
+            <select ng-model="moneyCategory">
+              <option ng-repeat="category in categories" value="{{category.id}}">{{category.name}}</option>
+            </select>
+          </td>
+          <td><input type="text" ng-model="moneyComment"></td>
+          <td><input type="text" ng-model="moneyAmount"></td>
+
+          <td class="text-right"><button type="button" class="btn btn-primary" ng-click="addMoney(moneyId)">추가</button></td>
+        </tr>
+
+        <tr ng-repeat="money in moneyList">
+          <td>{{ money.id }}</td>
+          <td>{{ money.created_at }}</td>
+          <td>{{ money.category }}</td>
+          <td>{{ money.comment }}</td>
+          <td>{{ money.amount }}</td>
+          <td class="text-right"><button type="button" class="btn btn-danger" ng-click="deleteMoney(money.id)">삭제</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <div ng-hide="true">
+    <h2>카테고리</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>NAME</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="category in categories">
+          <td>{{ category.id }}</td>
+          <td>{{ category.name }}</td>
+          <td class="text-right"><button type="button" class="btn btn-danger" ng-click="deleteCategory(category.id)">삭제</button></td>
+        </tr>
+
+        <tr>
+          <td><input type="text" ng-model="newCategoryId" ng-readonly="true"></td>
+          <td><input type="text" ng-model="newCategoryName"></td>
+          <td class="text-right"><button type="button" class="btn btn-primary" ng-click="addCategory(newCategoryId)">추가</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+
+</body>
+
+<script>
+
+angular.module('myApp', ['ngMaterial', 'ngMessages']).controller('myCtrl', function($scope) {
+
+  $scope.myDate = new Date();
+
+  //category add
+  $scope.addCategory = function(id) {
+    firebase.database().ref('category/' + id).set({
+      id: id,
+      name: $scope.newCategoryName
+    });
+
+    $scope.newCategoryName = "";
+  }
+
+  //category delete
+  $scope.deleteCategory = function(id) {
+    firebase.database().ref('category/' + id).remove();
+  }
+
+  //category list
+  firebase.database().ref('category').orderByKey().on('value', function(snapshot) {
+    var maxId = 0;
+
+    //json -> array
+    var arr = $.map(snapshot.val(), function(el) {
+      //첫판에 el이 undefine 인게 한번 옴.. 왜 그런지 모르겠네?!
+      if(el) {
+        maxId = el.id;
+        return el;
+      }
+    });
+
+    $scope.newCategoryId = Number(maxId) + 1;
+
+    //비동기 처리시 angular 렌더링 되도록
+    $scope.$evalAsync(function() {
+      $scope.categories = arr;
+    });
+  });
+
+
+
+  //money list
+  firebase.database().ref('money').orderByKey().on('value', function(snapshot) {
+    var maxId = 0;
+
+    if(snapshot.val() != null) {
+      //json -> array
+      var arr = $.map(snapshot.val(), function(el) {
+        //첫판에 el이 undefine 인게 한번 옴.. 왜 그런지 모르겠네?!
+        if(el) {
+          maxId = el.id;
+          return el;
+        }
+      });
+
+      //비동기 처리시 angular 렌더링 되도록
+      $scope.$evalAsync(function() {
+        $scope.moneyList = arr.reverse();
+      });
+    }
+
+    $scope.moneyId = Number(maxId) + 1;
+  });
+
+
+  //money add
+  $scope.addMoney = function(id) {
+
+    //debugger;
+
+    firebase.database().ref('money/' + id).set({
+      id: id,
+      created_at: $scope.moneyDate.yyyymmdd(),
+      category: $scope.moneyCategory,
+      comment: $scope.moneyComment,
+      amount: $scope.moneyAmount
+    });
+  }
+
+  //money delete
+  $scope.deleteMoney = function(id) {
+    firebase.database().ref('money/' + id).remove();
+  }
+
+
+});
+</script>
+
+</html>

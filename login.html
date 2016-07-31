@@ -1,48 +1,184 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Sample FirebaseUI App</title>
+<html ng-app="myApp" ng-controller="myCtrl">
+<head>
+  <meta charset="utf-8">
 
-    <script src="https://www.gstatic.com/firebasejs/3.1.0/firebase.js"></script>
-    <script>
-      var config = {
-        apiKey: "AIzaSyDI7pmQo56Gl7J5ABIIvMtg0kLmIPp1P64",
-        authDomain: "money-ad865.firebaseapp.com",
-        databaseURL: "https://money-ad865.firebaseio.com",
-        storageBucket: "money-ad865.appspot.com",
-      };
-      firebase.initializeApp(config);
-    </script>
+  <!-- Angular Material requires Angular.js Libraries -->
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-animate.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-aria.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-messages.min.js"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/ui/live/0.4/firebase-ui-auth.js"></script>
-    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/live/0.4/firebase-ui-auth.css" />
-    <script type="text/javascript">
-      // FirebaseUI config.
-      var uiConfig = {
-        'signInSuccessUrl': 'http://www.naver.com',
-        'signInOptions': [
-          // Leave the lines as is for the providers you want to offer your users.
-          firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-          firebase.auth.FacebookAuthProvider.PROVIDER_ID,
-          firebase.auth.TwitterAuthProvider.PROVIDER_ID,
-          firebase.auth.GithubAuthProvider.PROVIDER_ID,
-          firebase.auth.EmailAuthProvider.PROVIDER_ID
-        ],
-        // Terms of service url.
-        'tosUrl': 'http://www.naver.com',
-      };
 
-      // Initialize the FirebaseUI Widget using Firebase.
-      var ui = new firebaseui.auth.AuthUI(firebase.auth());
-      // The start method will wait until the DOM is loaded.
-      ui.start('#firebaseui-auth-container', uiConfig);
-    </script>
-  </head>
-  <body>
-    <!-- The surrounding HTML is left untouched by FirebaseUI.
-         Your app may use that space for branding, controls and other customizations.-->
-    <h1>Welcome to My Awesome App</h1>
-    <div id="firebaseui-auth-container"></div>
-  </body>
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
+
+  <!-- Angular Material style sheet -->
+  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.css">
+
+  <!-- Angular Material Library -->
+  <script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.js"></script>
+
+
+  <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyDI7pmQo56Gl7J5ABIIvMtg0kLmIPp1P64",
+      authDomain: "money-ad865.firebaseapp.com",
+      databaseURL: "https://money-ad865.firebaseio.com",
+      storageBucket: "money-ad865.appspot.com",
+    };
+    firebase.initializeApp(config);
+
+
+    Date.prototype.yyyymmdd = function()
+    {
+        var yyyy = this.getFullYear().toString();
+        var mm = (this.getMonth() + 1).toString();
+        var dd = this.getDate().toString();
+
+        return yyyy + "-" + (mm[1] ? mm : '0'+mm[0]) + "-" + (dd[1] ? dd : '0'+dd[0]);
+    }
+
+  </script>
+
+</head>
+
+<body class="container">
+
+  <div class="jumbotron">
+    <h1>로그인</h1>
+  </div>
+
+  <form class="form-horizontal" role="form" ng-submit="submit()">
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="email">Email:</label>
+      <div class="col-sm-10">
+        <input type="email" class="form-control" id="pwd" placeholder="Enter email">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="pwd">Password:</label>
+      <div class="col-sm-10">
+        <input type="password" class="form-control" id="pwd" placeholder="Enter password">
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </form>
+
+</body>
+
+<script>
+
+angular.module('myApp', []).controller('myCtrl', function($scope) {
+
+  $scope.submit = function() {
+
+    firebase.auth().signInWithEmailAndPassword(email, password).catch(function(error) {
+      // Handle Errors here.
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      // ...
+    });
+
+
+    if ($scope.text) {
+      $scope.list.push(this.text);
+      $scope.text = '';
+    }
+  };
+
+  //category add
+  $scope.addCategory = function(id) {
+    firebase.database().ref('category/' + id).set({
+      id: id,
+      name: $scope.newCategoryName
+    });
+
+    $scope.newCategoryName = "";
+  }
+
+  //category delete
+  $scope.deleteCategory = function(id) {
+    firebase.database().ref('category/' + id).remove();
+  }
+
+  //category list
+  firebase.database().ref('category').orderByKey().on('value', function(snapshot) {
+    var maxId = 0;
+
+    //json -> array
+    var arr = $.map(snapshot.val(), function(el) {
+      //첫판에 el이 undefine 인게 한번 옴.. 왜 그런지 모르겠네?!
+      if(el) {
+        maxId = el.id;
+        return el;
+      }
+    });
+
+    $scope.newCategoryId = Number(maxId) + 1;
+
+    //비동기 처리시 angular 렌더링 되도록
+    $scope.$evalAsync(function() {
+      $scope.categories = arr;
+    });
+  });
+
+
+
+  //money list
+  firebase.database().ref('money').orderByKey().on('value', function(snapshot) {
+    var maxId = 0;
+
+    if(snapshot.val() != null) {
+      //json -> array
+      var arr = $.map(snapshot.val(), function(el) {
+        //첫판에 el이 undefine 인게 한번 옴.. 왜 그런지 모르겠네?!
+        if(el) {
+          maxId = el.id;
+          return el;
+        }
+      });
+
+      //비동기 처리시 angular 렌더링 되도록
+      $scope.$evalAsync(function() {
+        $scope.moneyList = arr.reverse();
+      });
+    }
+
+    $scope.moneyId = Number(maxId) + 1;
+  });
+
+
+  //money add
+  $scope.addMoney = function(id) {
+
+    //debugger;
+
+    firebase.database().ref('money/' + id).set({
+      id: id,
+      created_at: $scope.moneyDate.yyyymmdd(),
+      category: $scope.moneyCategory,
+      comment: $scope.moneyComment,
+      amount: $scope.moneyAmount
+    });
+  }
+
+  //money delete
+  $scope.deleteMoney = function(id) {
+    firebase.database().ref('money/' + id).remove();
+  }
+
+
+
+
+
+});
+</script>
+
 </html>

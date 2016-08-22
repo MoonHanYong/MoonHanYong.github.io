@@ -1,48 +1,15 @@
 <!DOCTYPE html>
-<html ng-app="myApp" ng-controller="myCtrl">
+<html ng-app="myApp" ng-controller="loginCtrl">
 <head>
   <meta charset="utf-8">
 
-  <!-- Angular Material requires Angular.js Libraries -->
-  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.min.js"></script>
-  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-animate.min.js"></script>
-  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-aria.min.js"></script>
-  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-messages.min.js"></script>
-
-
   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
 
-  <!-- Angular Material style sheet -->
-  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.css">
-
-  <!-- Angular Material Library -->
-  <script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc2/angular-material.min.js"></script>
-
-
-  <script>
-    // Initialize Firebase
-    var config = {
-      apiKey: "AIzaSyDI7pmQo56Gl7J5ABIIvMtg0kLmIPp1P64",
-      authDomain: "money-ad865.firebaseapp.com",
-      databaseURL: "https://money-ad865.firebaseio.com",
-      storageBucket: "money-ad865.appspot.com",
-    };
-    firebase.initializeApp(config);
-
-
-    Date.prototype.yyyymmdd = function()
-    {
-        var yyyy = this.getFullYear().toString();
-        var mm = (this.getMonth() + 1).toString();
-        var dd = this.getDate().toString();
-
-        return yyyy + "-" + (mm[1] ? mm : '0'+mm[0]) + "-" + (dd[1] ? dd : '0'+dd[0]);
-    }
-
-  </script>
-
+  <script src="js/config.js"></script>
 </head>
 
 <body class="container">
@@ -55,13 +22,13 @@
     <div class="form-group">
       <label class="control-label col-sm-2" for="email">Email:</label>
       <div class="col-sm-10">
-        <input type="email" class="form-control" id="pwd" placeholder="Enter email">
+        <input type="email" class="form-control" ng-model="email" placeholder="Enter email">
       </div>
     </div>
     <div class="form-group">
       <label class="control-label col-sm-2" for="pwd">Password:</label>
       <div class="col-sm-10">
-        <input type="password" class="form-control" id="pwd" placeholder="Enter password">
+        <input type="password" class="form-control" ng-model="password" placeholder="Enter password">
       </div>
     </div>
     <div class="form-group">
@@ -73,112 +40,6 @@
 
 </body>
 
-<script>
-
-angular.module('myApp', []).controller('myCtrl', function($scope) {
-
-  $scope.submit = function() {
-
-    firebase.auth().signInWithEmailAndPassword(email, password).catch(function(error) {
-      // Handle Errors here.
-      var errorCode = error.code;
-      var errorMessage = error.message;
-      // ...
-    });
-
-
-    if ($scope.text) {
-      $scope.list.push(this.text);
-      $scope.text = '';
-    }
-  };
-
-  //category add
-  $scope.addCategory = function(id) {
-    firebase.database().ref('category/' + id).set({
-      id: id,
-      name: $scope.newCategoryName
-    });
-
-    $scope.newCategoryName = "";
-  }
-
-  //category delete
-  $scope.deleteCategory = function(id) {
-    firebase.database().ref('category/' + id).remove();
-  }
-
-  //category list
-  firebase.database().ref('category').orderByKey().on('value', function(snapshot) {
-    var maxId = 0;
-
-    //json -> array
-    var arr = $.map(snapshot.val(), function(el) {
-      //첫판에 el이 undefine 인게 한번 옴.. 왜 그런지 모르겠네?!
-      if(el) {
-        maxId = el.id;
-        return el;
-      }
-    });
-
-    $scope.newCategoryId = Number(maxId) + 1;
-
-    //비동기 처리시 angular 렌더링 되도록
-    $scope.$evalAsync(function() {
-      $scope.categories = arr;
-    });
-  });
-
-
-
-  //money list
-  firebase.database().ref('money').orderByKey().on('value', function(snapshot) {
-    var maxId = 0;
-
-    if(snapshot.val() != null) {
-      //json -> array
-      var arr = $.map(snapshot.val(), function(el) {
-        //첫판에 el이 undefine 인게 한번 옴.. 왜 그런지 모르겠네?!
-        if(el) {
-          maxId = el.id;
-          return el;
-        }
-      });
-
-      //비동기 처리시 angular 렌더링 되도록
-      $scope.$evalAsync(function() {
-        $scope.moneyList = arr.reverse();
-      });
-    }
-
-    $scope.moneyId = Number(maxId) + 1;
-  });
-
-
-  //money add
-  $scope.addMoney = function(id) {
-
-    //debugger;
-
-    firebase.database().ref('money/' + id).set({
-      id: id,
-      created_at: $scope.moneyDate.yyyymmdd(),
-      category: $scope.moneyCategory,
-      comment: $scope.moneyComment,
-      amount: $scope.moneyAmount
-    });
-  }
-
-  //money delete
-  $scope.deleteMoney = function(id) {
-    firebase.database().ref('money/' + id).remove();
-  }
-
-
-
-
-
-});
-</script>
+<script src="js/login.js"></script>
 
 </html>

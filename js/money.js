@@ -22,7 +22,8 @@ myApp.controller('moneyCtrl', function($scope) {
 
     $scope.newMoney = {
       id: Number(maxId) + 1,
-      created_at: (new Date()).yyyymmdd()
+      created_at: (new Date()).yyyymmdd(),
+      email: userEmail
     };
   });
 

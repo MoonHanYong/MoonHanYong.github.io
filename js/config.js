@@ -17,6 +17,7 @@ Date.prototype.yyyymmdd = function()
 }
 
 var myApp = angular.module('myApp', []);
+var userEmail = '';
 
 myApp.controller('headerController', function($scope, $location) {
   $scope.isActive = function (viewLocation) {
@@ -29,7 +30,12 @@ myApp.controller('headerController', function($scope, $location) {
   };
 
   firebase.auth().onAuthStateChanged(function(a) {
+    if(!a) {
+      window.location = "login.html";
+      return;
+    }
     $scope.loginEmail = a.email;
+    userEmail = a.email;
   });
 
 });
